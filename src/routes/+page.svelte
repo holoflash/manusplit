@@ -1,2 +1,28 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<script lang="ts">
+    import Lyrics from "../lib/Lyrics.svelte";
+</script>
+
+<main>
+    <h1>Welcome to the Home Page</h1>
+    <p>
+        This is the main homepage content. Below, you can submit and view song
+        lyrics.
+    </p>
+
+    <Lyrics />
+</main>
+
+<style>
+    main {
+        padding: 20px;
+        font-family: sans-serif;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    p {
+        font-size: 1.2rem;
+    }
+</style>
