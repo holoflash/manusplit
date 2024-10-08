@@ -1,25 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte";
 
+    export let lyricsText: string = "";
+
     let lyricsContent: (string | { tag: string; content: string })[] = [];
     let checkedStates: boolean[][] = [];
     let dropdownOpen: boolean[] = [];
-    let allChecked: boolean[] = []; // Track the "ALL" checkbox state
 
-    async function fetchLyrics() {
-        const response = await fetch("/lyrics.md");
-        if (!response.ok) {
-            console.error("Failed to fetch lyrics:", response.statusText);
-            return;
-        }
-        const text = await response.text();
-        const parsedContent = parseMarkdown(text);
-        lyricsContent = parsedContent;
-        loadCheckedStates();
-        dropdownOpen = new Array(lyricsContent.length).fill(false);
-    }
-
-    function parseMarkdown(
+    function parseText(
         text: string,
     ): (string | { tag: string; content: string })[] {
         const lines = text.split("\n");
@@ -32,6 +20,8 @@
                 result.push({ tag: "h2", content: line.substring(3).trim() });
             } else if (line.startsWith("### ")) {
                 result.push({ tag: "h3", content: line.substring(4).trim() });
+            } else if (line.startsWith("***")) {
+                result.push({ tag: "br", content: "" });
             } else if (line.trim() !== "") {
                 result.push(line.trim());
             }
@@ -48,39 +38,22 @@
                 .fill(null)
                 .map(() => new Array(4).fill(false));
         }
-        allChecked = checkedStates.map((state) =>
-            state.every((checked) => checked),
-        ); // Initialize allChecked
     }
 
     function updateCheckedState(lineIndex: number, optionIndex: number) {
         checkedStates[lineIndex][optionIndex] =
             !checkedStates[lineIndex][optionIndex];
         localStorage.setItem("checkedStates", JSON.stringify(checkedStates));
-        updateAllChecked(lineIndex);
-    }
-
-    function updateAllChecked(lineIndex: number) {
-        allChecked[lineIndex] = checkedStates[lineIndex].every(
-            (checked) => checked,
-        );
     }
 
     function toggleDropdown(lineIndex: number) {
-        dropdownOpen = dropdownOpen.map((open, i) =>
-            i === lineIndex ? !open : false,
-        );
-    }
-
-    function toggleAll(lineIndex: number) {
-        const newState = !allChecked[lineIndex];
-        checkedStates[lineIndex] = new Array(4).fill(newState); // Set all options to new state
-        allChecked[lineIndex] = newState;
-        localStorage.setItem("checkedStates", JSON.stringify(checkedStates));
+        dropdownOpen[lineIndex] = !dropdownOpen[lineIndex];
     }
 
     onMount(() => {
-        fetchLyrics();
+        lyricsContent = parseText(lyricsText);
+        loadCheckedStates();
+        dropdownOpen = new Array(lyricsContent.length).fill(false);
     });
 </script>
 
@@ -93,32 +66,74 @@
                         {line}
                     </button>
                     <div class="options-container">
-                        {#if allChecked[lineIndex]}
-                            <span class="all-option">ALL</span>
-                        {:else}
-                            {#each Array(4) as _, optionIndex}
-                                {#if checkedStates[lineIndex][optionIndex]}
-                                    <span
-                                        class={`selected-option option-${optionIndex + 1}`}
-                                        >{["BAR", "ALT", "MEZ", "SOP"][
-                                            optionIndex
-                                        ]}</span
-                                    >
-                                {/if}
-                            {/each}
-                        {/if}
+                        {#each Array(4) as _, optionIndex}
+                            {#if checkedStates[lineIndex][optionIndex]}
+                                <span
+                                    class={`selected-option option-${optionIndex + 1}`}
+                                    >{["BAR", "ALT", "MEZ", "SOP"][
+                                        optionIndex
+                                    ]}</span
+                                >
+                            {/if}
+                        {/each}
                     </div>
                 </div>
                 {#if dropdownOpen[lineIndex]}
                     <div class="dropdown">
-                        <label class="option-label">
-                            <input
-                                type="checkbox"
-                                checked={allChecked[lineIndex]}
-                                on:change={() => toggleAll(lineIndex)}
-                            />
-                            ALL
-                        </label>
+                        {#each Array(4) as _, optionIndex}
+                            <label class="option-label">
+                                <input
+                                    type="checkbox"
+                                    checked={checkedStates[lineIndex][
+                                        optionIndex
+                                    ]}
+                                    on:change={() =>
+                                        updateCheckedState(
+                                            lineIndex,
+                                            optionIndex,
+                                        )}
+                                />
+                                {["BAR", "ALT", "MEZ", "SOP"][optionIndex]}
+                            </label>
+                        {/each}
+                    </div>
+                {/if}
+            {:else if line.tag === "h1"}
+                <h1>{line.content}</h1>
+            {:else if line.tag === "h2"}
+                <h2>{line.content}</h2>
+            {:else if line.tag === "h3"}
+                <h3>{line.content}</h3>
+            {:else if line.tag === "br"}
+                <br />
+            {/if}
+        </div>
+    {/each}
+</div>
+
+<div>
+    {#each lyricsContent as line, lineIndex}
+        <div>
+            {#if typeof line === "string"}
+                <div class="line-container">
+                    <button on:click={() => toggleDropdown(lineIndex)}>
+                        {line}
+                    </button>
+                    <div class="options-container">
+                        {#each Array(4) as _, optionIndex}
+                            {#if checkedStates[lineIndex][optionIndex]}
+                                <span
+                                    class={`selected-option option-${optionIndex + 1}`}
+                                    >{["BAR", "ALT", "MEZ", "SOP"][
+                                        optionIndex
+                                    ]}</span
+                                >
+                            {/if}
+                        {/each}
+                    </div>
+                </div>
+                {#if dropdownOpen[lineIndex]}
+                    <div class="dropdown">
                         {#each Array(4) as _, optionIndex}
                             <label class="option-label">
                                 <input
@@ -144,6 +159,8 @@
                 <h2>{line.content}</h2>
             {:else if line.tag === "h3"}
                 <h3>{line.content}</h3>
+            {:else if line.tag === "br"}
+                <br />
             {/if}
         </div>
     {/each}
