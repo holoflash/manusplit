@@ -7,7 +7,7 @@
     let allChecked: boolean[] = []; // Track the "ALL" checkbox state
 
     async function fetchLyrics() {
-        const response = await fetch('/lyrics.md');
+        const response = await fetch("/lyrics.md");
         if (!response.ok) {
             console.error("Failed to fetch lyrics:", response.statusText);
             return;
@@ -19,18 +19,20 @@
         dropdownOpen = new Array(lyricsContent.length).fill(false);
     }
 
-    function parseMarkdown(text: string): (string | { tag: string; content: string })[] {
-        const lines = text.split('\n');
+    function parseMarkdown(
+        text: string,
+    ): (string | { tag: string; content: string })[] {
+        const lines = text.split("\n");
         const result: (string | { tag: string; content: string })[] = [];
-        
+
         for (const line of lines) {
-            if (line.startsWith('# ')) {
-                result.push({ tag: 'h1', content: line.substring(2).trim() });
-            } else if (line.startsWith('## ')) {
-                result.push({ tag: 'h2', content: line.substring(3).trim() });
-            } else if (line.startsWith('### ')) {
-                result.push({ tag: 'h3', content: line.substring(4).trim() });
-            } else if (line.trim() !== '') {
+            if (line.startsWith("# ")) {
+                result.push({ tag: "h1", content: line.substring(2).trim() });
+            } else if (line.startsWith("## ")) {
+                result.push({ tag: "h2", content: line.substring(3).trim() });
+            } else if (line.startsWith("### ")) {
+                result.push({ tag: "h3", content: line.substring(4).trim() });
+            } else if (line.trim() !== "") {
                 result.push(line.trim());
             }
         }
@@ -38,48 +40,43 @@
     }
 
     function loadCheckedStates() {
-        const storedStates = localStorage.getItem('checkedStates');
+        const storedStates = localStorage.getItem("checkedStates");
         if (storedStates) {
             checkedStates = JSON.parse(storedStates);
         } else {
-            checkedStates = new Array(lyricsContent.length).fill(null).map(() => new Array(4).fill(false));
+            checkedStates = new Array(lyricsContent.length)
+                .fill(null)
+                .map(() => new Array(4).fill(false));
         }
-        allChecked = checkedStates.map(state => state.every(checked => checked)); // Initialize allChecked
+        allChecked = checkedStates.map((state) =>
+            state.every((checked) => checked),
+        ); // Initialize allChecked
     }
 
     function updateCheckedState(lineIndex: number, optionIndex: number) {
-        checkedStates[lineIndex][optionIndex] = !checkedStates[lineIndex][optionIndex];
-        localStorage.setItem('checkedStates', JSON.stringify(checkedStates));
+        checkedStates[lineIndex][optionIndex] =
+            !checkedStates[lineIndex][optionIndex];
+        localStorage.setItem("checkedStates", JSON.stringify(checkedStates));
         updateAllChecked(lineIndex);
     }
 
     function updateAllChecked(lineIndex: number) {
-        allChecked[lineIndex] = checkedStates[lineIndex].every(checked => checked);
+        allChecked[lineIndex] = checkedStates[lineIndex].every(
+            (checked) => checked,
+        );
     }
 
     function toggleDropdown(lineIndex: number) {
-        dropdownOpen[lineIndex] = !dropdownOpen[lineIndex];
+        dropdownOpen = dropdownOpen.map((open, i) =>
+            i === lineIndex ? !open : false,
+        );
     }
 
     function toggleAll(lineIndex: number) {
         const newState = !allChecked[lineIndex];
         checkedStates[lineIndex] = new Array(4).fill(newState); // Set all options to new state
         allChecked[lineIndex] = newState;
-        localStorage.setItem('checkedStates', JSON.stringify(checkedStates));
-    }
-
-    function getSelectedSymbols(lineIndex: number): string {
-        const symbols = ['BAR', 'ALT', 'MEZ', 'SOP'];
-        const selectedCount = checkedStates[lineIndex].filter(checked => checked).length;
-
-        if (selectedCount === symbols.length) {
-            return 'ALL';
-        }
-
-        return checkedStates[lineIndex]
-            .map((checked, index) => checked ? symbols[index] : null)
-            .filter(symbol => symbol !== null)
-            .join('');
+        localStorage.setItem("checkedStates", JSON.stringify(checkedStates));
     }
 
     onMount(() => {
@@ -90,7 +87,7 @@
 <div>
     {#each lyricsContent as line, lineIndex}
         <div>
-            {#if typeof line === 'string'}
+            {#if typeof line === "string"}
                 <div class="line-container">
                     <button on:click={() => toggleDropdown(lineIndex)}>
                         {line}
@@ -101,7 +98,12 @@
                         {:else}
                             {#each Array(4) as _, optionIndex}
                                 {#if checkedStates[lineIndex][optionIndex]}
-                                    <span class={`selected-option option-${optionIndex + 1}`}>{['BAR', 'ALT', 'MEZ', 'SOP'][optionIndex]}</span>
+                                    <span
+                                        class={`selected-option option-${optionIndex + 1}`}
+                                        >{["BAR", "ALT", "MEZ", "SOP"][
+                                            optionIndex
+                                        ]}</span
+                                    >
                                 {/if}
                             {/each}
                         {/if}
@@ -110,32 +112,37 @@
                 {#if dropdownOpen[lineIndex]}
                     <div class="dropdown">
                         <label class="option-label">
-                            <input 
-                                type="checkbox" 
-                                checked={allChecked[lineIndex]} 
-                                on:change={() => toggleAll(lineIndex)} 
+                            <input
+                                type="checkbox"
+                                checked={allChecked[lineIndex]}
+                                on:change={() => toggleAll(lineIndex)}
                             />
                             ALL
                         </label>
                         {#each Array(4) as _, optionIndex}
                             <label class="option-label">
-                                <input 
-                                    type="checkbox" 
-                                    checked={checkedStates[lineIndex][optionIndex]} 
+                                <input
+                                    type="checkbox"
+                                    checked={checkedStates[lineIndex][
+                                        optionIndex
+                                    ]}
                                     on:change={() => {
-                                        updateCheckedState(lineIndex, optionIndex);
-                                    }} 
+                                        updateCheckedState(
+                                            lineIndex,
+                                            optionIndex,
+                                        );
+                                    }}
                                 />
-                                {['BAR', 'ALT', 'MEZ', 'SOP'][optionIndex]}
+                                {["BAR", "ALT", "MEZ", "SOP"][optionIndex]}
                             </label>
                         {/each}
                     </div>
                 {/if}
-            {:else if line.tag === 'h1'}
+            {:else if line.tag === "h1"}
                 <h1>{line.content}</h1>
-            {:else if line.tag === 'h2'}
+            {:else if line.tag === "h2"}
                 <h2>{line.content}</h2>
-            {:else if line.tag === 'h3'}
+            {:else if line.tag === "h3"}
                 <h3>{line.content}</h3>
             {/if}
         </div>
@@ -145,7 +152,8 @@
 <style>
     div {
         text-align: center;
-        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+            "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
     }
     input {
         margin-left: 5px;
@@ -186,7 +194,7 @@
     }
 
     .option-1 {
-        background-color: green
+        background-color: green;
     }
 
     .option-2 {
