@@ -2,6 +2,9 @@
     import { onMount } from "svelte";
 
     export let lyricsText: string = "";
+    export let storageKey: string = ""; // New variable for page-specific key
+
+    const options = ["BAR", "ALT", "MEZ", "SOP", "KÖR"];
 
     let lyricsContent: (string | { tag: string; content: string })[] = [];
     let checkedStates: boolean[][] = [];
@@ -30,20 +33,25 @@
     }
 
     function loadCheckedStates() {
-        const storedStates = localStorage.getItem("checkedStates");
+        const storedStates = localStorage.getItem(
+            `checkedStates_${storageKey}`,
+        );
         if (storedStates) {
             checkedStates = JSON.parse(storedStates);
         } else {
-            checkedStates = new Array(lyricsContent.length)
-                .fill(null)
-                .map(() => new Array(4).fill(false));
+            checkedStates = lyricsContent.map(() =>
+                Array(options.length).fill(false),
+            );
         }
     }
 
     function updateCheckedState(lineIndex: number, optionIndex: number) {
         checkedStates[lineIndex][optionIndex] =
             !checkedStates[lineIndex][optionIndex];
-        localStorage.setItem("checkedStates", JSON.stringify(checkedStates));
+        localStorage.setItem(
+            `checkedStates_${storageKey}`,
+            JSON.stringify(checkedStates),
+        );
     }
 
     function toggleDropdown(lineIndex: number) {
@@ -53,125 +61,63 @@
     onMount(() => {
         lyricsContent = parseText(lyricsText);
         loadCheckedStates();
-        dropdownOpen = new Array(lyricsContent.length).fill(false);
     });
 </script>
 
-<div>
+<div class="content">
     {#each lyricsContent as line, lineIndex}
-        <div>
-            {#if typeof line === "string"}
-                <div class="line-container">
-                    <button on:click={() => toggleDropdown(lineIndex)}>
-                        {line}
-                    </button>
-                    <div class="options-container">
-                        {#each Array(4) as _, optionIndex}
-                            {#if checkedStates[lineIndex][optionIndex]}
-                                <span
-                                    class={`selected-option option-${optionIndex + 1}`}
-                                    >{["BAR", "ALT", "MEZ", "SOP"][
-                                        optionIndex
-                                    ]}</span
-                                >
-                            {/if}
-                        {/each}
-                    </div>
+        {#if typeof line === "string"}
+            <div class="line-container">
+                <div class="options-container">
+                    {#each options as option, optionIndex}
+                        {#if checkedStates[lineIndex][optionIndex]}
+                            <span class={`selected-option ${option}`}>
+                                {option}
+                            </span>
+                        {/if}
+                    {/each}
                 </div>
-                {#if dropdownOpen[lineIndex]}
-                    <div class="dropdown">
-                        {#each Array(4) as _, optionIndex}
-                            <label class="option-label">
-                                <input
-                                    type="checkbox"
-                                    checked={checkedStates[lineIndex][
-                                        optionIndex
-                                    ]}
-                                    on:change={() =>
-                                        updateCheckedState(
-                                            lineIndex,
-                                            optionIndex,
-                                        )}
-                                />
-                                {["BAR", "ALT", "MEZ", "SOP"][optionIndex]}
-                            </label>
-                        {/each}
-                    </div>
-                {/if}
-            {:else if line.tag === "h1"}
-                <h1>{line.content}</h1>
-            {:else if line.tag === "h2"}
-                <h2>{line.content}</h2>
-            {:else if line.tag === "h3"}
-                <h3>{line.content}</h3>
-            {:else if line.tag === "br"}
-                <br />
-            {/if}
-        </div>
-    {/each}
-</div>
+                <button on:click={() => toggleDropdown(lineIndex)}>
+                    {line}
+                </button>
+            </div>
 
-<div>
-    {#each lyricsContent as line, lineIndex}
-        <div>
-            {#if typeof line === "string"}
-                <div class="line-container">
-                    <button on:click={() => toggleDropdown(lineIndex)}>
-                        {line}
-                    </button>
-                    <div class="options-container">
-                        {#each Array(4) as _, optionIndex}
-                            {#if checkedStates[lineIndex][optionIndex]}
-                                <span
-                                    class={`selected-option option-${optionIndex + 1}`}
-                                    >{["BAR", "ALT", "MEZ", "SOP"][
-                                        optionIndex
-                                    ]}</span
-                                >
-                            {/if}
-                        {/each}
-                    </div>
+            {#if dropdownOpen[lineIndex]}
+                <div class="dropdown">
+                    {#each options as option, optionIndex}
+                        <label class="option-label">
+                            <input
+                                type="checkbox"
+                                checked={checkedStates[lineIndex][optionIndex]}
+                                on:change={() =>
+                                    updateCheckedState(lineIndex, optionIndex)}
+                            />
+                            {option}
+                        </label>
+                    {/each}
                 </div>
-                {#if dropdownOpen[lineIndex]}
-                    <div class="dropdown">
-                        {#each Array(4) as _, optionIndex}
-                            <label class="option-label">
-                                <input
-                                    type="checkbox"
-                                    checked={checkedStates[lineIndex][
-                                        optionIndex
-                                    ]}
-                                    on:change={() => {
-                                        updateCheckedState(
-                                            lineIndex,
-                                            optionIndex,
-                                        );
-                                    }}
-                                />
-                                {["BAR", "ALT", "MEZ", "SOP"][optionIndex]}
-                            </label>
-                        {/each}
-                    </div>
-                {/if}
-            {:else if line.tag === "h1"}
-                <h1>{line.content}</h1>
-            {:else if line.tag === "h2"}
-                <h2>{line.content}</h2>
-            {:else if line.tag === "h3"}
-                <h3>{line.content}</h3>
-            {:else if line.tag === "br"}
-                <br />
             {/if}
-        </div>
+        {:else if line.tag === "h1"}
+            <h1>{line.content}</h1>
+        {:else if line.tag === "h2"}
+            <h2>{line.content}</h2>
+        {:else if line.tag === "h3"}
+            <h3>{line.content}</h3>
+        {:else if line.tag === "br"}
+            <br />
+        {/if}
     {/each}
 </div>
 
 <style>
-    div {
+    .content {
+        display: flex;
+        flex-direction: column;
         text-align: center;
         font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
             "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
     }
+
     input {
         margin-left: 5px;
     }
@@ -193,45 +139,38 @@
 
     .line-container {
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin: 10px 0;
+        margin-block: 5px;
     }
-
     .options-container {
-        margin-left: 10px;
+        display: flex;
     }
 
     .selected-option {
-        margin-left: 5px;
-        padding: 3px 6px;
-        border-radius: 4px;
+        padding: 1px 5px;
         color: #fff;
         font-weight: bold;
     }
 
-    .option-1 {
+    .BAR {
         background-color: green;
     }
 
-    .option-2 {
+    .ALT {
         background-color: #36a2eb;
     }
 
-    .option-3 {
+    .MEZ {
         background-color: yellow;
+        color: black;
     }
 
-    .option-4 {
+    .SOP {
         background-color: red;
     }
-
-    .all-option {
-        margin-left: 5px;
-        padding: 3px 6px;
-        border-radius: 4px;
-        background-color: #8e44ad;
-        color: #fff;
-        font-weight: bold;
+    .KÖR {
+        background-color: black;
     }
 </style>

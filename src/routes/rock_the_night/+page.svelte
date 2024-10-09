@@ -2,9 +2,9 @@
     import Lyrics from "$lib/Lyrics.svelte";
 
     const lyricsText = `
-# Abba Fusion
+# Rock The Night
 ## Warmup
-### Don't Shut Me Down
+### We Built This City
 A while ago, I heard the sound of children's laughter 
 Now it's quiet, so I guess they left the park
 This wooden bench is getting harder by the hour
@@ -32,7 +32,7 @@ And I'm asking you to have an open mind (and I won't be the same)
 I'm not the same this time around (ooh)
 I'm fired up, don't shut me down
 `;
-    const storageKey = `Abba Fusion`;
+    const storageKey = "rock_the_night";
 </script>
 
 <div>
